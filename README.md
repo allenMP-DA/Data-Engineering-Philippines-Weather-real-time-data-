@@ -52,58 +52,34 @@ This project demonstrates real-world data engineering concepts including:
 ### Data Flow
 
 ```text
-┌─────────────────────┐
-│   Open-Meteo API    │
-│    Weather Data     │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   Python Producer   │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   Apache Kafka      │
-│    Weather Topic    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   Python Consumer   │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│       MinIO         │
-│   Bronze Layer      │
-│      Raw JSON       │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   Apache Airflow    │
-│   ETL Orchestration │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│       MySQL         │
-│   Silver Layer      │
-└──────────┬──────────┘
-           │
-           │ SQL Transformations
-           ▼
-┌─────────────────────┐
-│       MySQL         │
-│    Gold Layer       │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│     Power BI        │
-│ Weather Dashboard   │
-└─────────────────────┘
+Open-Meteo API
+      │
+      ▼
+Python Producer
+      │
+      ▼
+Apache Kafka
+      │
+      ▼
+Python Consumer
+      │
+      ▼
+MinIO - Bronze Layer
+      │
+      ▼
+Apache Airflow
+      │
+      ▼
+MySQL - Silver Layer
+      │
+      ▼
+SQL Transformations
+      │
+      ▼
+MySQL - Gold Layer
+      │
+      ▼
+Power BI Dashboard
 ```
 
 ---
@@ -136,23 +112,14 @@ real-time-weather-philippines-update/
 └── infra/
     │
     ├── dags/
-    │   └── weather_pipeline.py
     │
     ├── sql/
-    │   │
     │   ├── silver/
-    │   │   └── weather_silver.sql
-    │   │
     │   └── gold/
-    │       ├── weather_kpi.sql
-    │       ├── weather_daily_summary.sql
-    │       └── weather_trend.sql
     │
     ├── docker-compose.yml
     └── requirements.txt
 ```
-
-> **Note:** If your actual DAG or SQL filenames are different, replace the example filenames above with your real filenames.
 
 ---
 
@@ -180,23 +147,11 @@ The producer retrieves weather information such as:
 
 The collected weather data is published to an **Apache Kafka** topic.
 
-### Producer Flow
-
-```text
-Open-Meteo API
-      │
-      ▼
-Python Producer
-      │
-      ▼
-Apache Kafka
-```
-
 ---
 
 # 2. 📨 Apache Kafka
 
-**Apache Kafka** acts as the real-time messaging layer between the weather API producer and consumer.
+Apache Kafka acts as the real-time messaging layer between the weather API producer and consumer.
 
 ```text
 Open-Meteo API
@@ -222,18 +177,18 @@ The Python consumer reads weather messages from Kafka and stores the raw JSON da
 This represents the **Bronze Layer** of the data architecture.
 
 ```text
-Apache Kafka
-      │
-      ▼
+Kafka
+  │
+  ▼
 Python Consumer
-      │
-      ▼
+  │
+  ▼
 MinIO
-      │
-      └── Bronze Layer
+  │
+  └── Bronze Layer
 ```
 
-Raw weather data is preserved in JSON format before being processed by the ETL pipeline.
+Raw data is preserved in JSON format before being processed by the ETL pipeline.
 
 ---
 
@@ -241,7 +196,7 @@ Raw weather data is preserved in JSON format before being processed by the ETL p
 
 ## 🥉 Bronze Layer
 
-The Bronze Layer contains the **raw weather data** collected from the Open-Meteo API.
+The Bronze Layer contains the raw weather data collected from the Open-Meteo API.
 
 | Attribute | Description                |
 | --------- | -------------------------- |
@@ -249,8 +204,6 @@ The Bronze Layer contains the **raw weather data** collected from the Open-Meteo
 | Format    | JSON                       |
 | Data Type | Raw                        |
 | Purpose   | Preserve original API data |
-
-### Bronze Flow
 
 ```text
 Open-Meteo API
@@ -267,15 +220,11 @@ MinIO
       └── Bronze Layer
 ```
 
-The Bronze Layer preserves the original data before transformation.
-
 ---
 
-# 🥈 Silver Layer
+## 🥈 Silver Layer
 
 Apache Airflow extracts the raw JSON data from MinIO, transforms the data, and loads the cleaned records into MySQL.
-
-### ETL Flow
 
 ```text
 MinIO
@@ -295,19 +244,19 @@ MySQL
   └── Silver Layer
 ```
 
-The Silver Layer contains **cleaned and structured weather observations** that are ready for further transformation.
+The Silver Layer contains cleaned and structured weather observations.
 
 ---
 
-# 🥇 Gold Layer
+## 🥇 Gold Layer
 
-The Gold Layer contains **analytics-ready datasets** created from the Silver Layer using SQL transformations.
+The Gold Layer contains analytics-ready datasets created from the Silver Layer using SQL transformations.
 
-## 📊 GOLD_WEATHER_KPI
+### 📊 GOLD_WEATHER_KPI
 
 Contains the latest weather information for each city.
 
-### Key Fields
+**Key fields:**
 
 * City
 * Temperature
@@ -318,32 +267,20 @@ Contains the latest weather information for each city.
 * Weather Status
 * Last Updated
 
----
-
-## 📅 GOLD_WEATHER_DAILY_SUMMARY
+### 📅 GOLD_WEATHER_DAILY_SUMMARY
 
 Contains aggregated daily weather information.
 
-### Examples
+**Examples:**
 
 * Daily Average Temperature
 * Average Humidity
 * Total Rain
 * Average Wind Speed
 
----
-
-## 📈 GOLD_WEATHER_TREND
+### 📈 GOLD_WEATHER_TREND
 
 Contains historical weather observations used for weather trend analysis.
-
-The table can be used to analyze changes in:
-
-* Temperature
-* Humidity
-* Rainfall
-* Wind Speed
-* Weather Conditions
 
 ---
 
@@ -358,43 +295,23 @@ Apache Airflow orchestrates the ETL process and automates the movement of weathe
 ### ETL Process
 
 ```text
-┌─────────────────────┐
-│       MinIO         │
-│   Bronze Layer      │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│      Extract        │
-│   Raw Weather Data  │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│     Transform       │
-│   Clean / Structure │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│        Load         │
-│      MySQL          │
-│   Silver Layer      │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  SQL Transformations│
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│      MySQL          │
-│    Gold Layer       │
-└─────────────────────┘
+MinIO
+  │
+  ▼
+Extract Raw Weather Data
+  │
+  ▼
+Transform / Clean Data
+  │
+  ▼
+Load to MySQL Silver
+  │
+  ▼
+SQL Transformations
+  │
+  ▼
+MySQL Gold Tables
 ```
-
-Airflow is responsible for scheduling and orchestrating the data transformation workflow.
 
 ---
 
@@ -406,23 +323,19 @@ Airflow is responsible for scheduling and orchestrating the data transformation 
 
 The processed Gold Layer data is connected to **Power BI** to create an interactive weather monitoring dashboard.
 
-## Dashboard Features
+### Dashboard Features
 
-| Feature                    | Description                                       |
-| -------------------------- | ------------------------------------------------- |
-| 🌡️ Current Temperature    | Displays current temperature                      |
-| 🌡️ Feels-Like Temperature | Displays apparent temperature                     |
-| 💧 Humidity                | Shows current humidity                            |
-| 🌧️ Rain                   | Displays rainfall information                     |
-| 💨 Wind Speed              | Displays current wind speed                       |
-| 🗺️ Weather Map            | Displays weather conditions by location           |
-| 📈 Weather Trends          | Shows historical weather changes                  |
-| 🚨 Weather Alerts          | Highlights weather conditions requiring attention |
-| 📊 Daily Weather Summary   | Shows daily aggregated weather data               |
-| 🏙️ City Filtering         | Allows filtering by city                          |
-| 🕐 Latest Update           | Shows the latest weather update                   |
-
-The dashboard allows users to monitor weather conditions across different locations in the Philippines.
+* 🌡️ Current Temperature
+* 🌡️ Feels-Like Temperature
+* 💧 Humidity
+* 🌧️ Rain
+* 💨 Wind Speed
+* 🗺️ Weather Map
+* 📈 Weather Trends
+* 🚨 Weather Alerts
+* 📊 Daily Weather Summary
+* 🏙️ City-Level Filtering
+* 🕐 Latest Weather Update
 
 ---
 
@@ -430,174 +343,16 @@ The dashboard allows users to monitor weather conditions across different locati
 
 The pipeline is containerized using **Docker**.
 
-### Main Infrastructure Components
-
 ```text
-                    Docker
-                       │
-       ┌───────────────┼───────────────┐
-       │               │               │
-       ▼               ▼               ▼
-   Apache Kafka     Zookeeper       Kafdrop
-       │
-       │
-       ├───────────────┐
-       │               │
-       ▼               ▼
-     MinIO         Apache Airflow
-                       │
-                       ▼
-                     MySQL
+Docker
+│
+├── Apache Kafka
+├── Zookeeper
+├── Kafdrop
+├── MinIO
+├── Apache Airflow
+└── MySQL
 ```
-
-### Infrastructure Roles
-
-| Component      | Purpose                        |
-| -------------- | ------------------------------ |
-| Docker         | Containerization               |
-| Apache Kafka   | Real-time message streaming    |
-| Zookeeper      | Kafka coordination             |
-| Kafdrop        | Kafka monitoring               |
-| MinIO          | Object storage / Bronze Layer  |
-| Apache Airflow | ETL orchestration              |
-| MySQL          | Silver and Gold data warehouse |
-
----
-
-# 🔁 End-to-End Pipeline
-
-The complete pipeline can be summarized as:
-
-```text
-                 ┌──────────────────┐
-                 │  Open-Meteo API  │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │ Python Producer  │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │  Apache Kafka    │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │ Python Consumer  │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │      MinIO       │
-                 │  Bronze Layer    │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │  Apache Airflow  │
-                 │       ETL        │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │      MySQL       │
-                 │  Silver Layer    │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │ SQL Transform    │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │      MySQL       │
-                 │   Gold Layer     │
-                 └────────┬─────────┘
-                          │
-                          ▼
-                 ┌──────────────────┐
-                 │     Power BI     │
-                 │    Dashboard     │
-                 └──────────────────┘
-```
-
----
-
-# 📸 Screenshots
-
-## Kafka Monitoring
-
-<p align="center">
-  <img src="images/kafdrop.png" width="900">
-</p>
-
-## MinIO Bronze Layer
-
-<p align="center">
-  <img src="images/minio.png" width="900">
-</p>
-
-## Airflow Pipeline
-
-<p align="center">
-  <img src="images/weather_data_pipeline.png" width="900">
-</p>
-
-## Power BI Dashboard
-
-<p align="center">
-  <img src="images/weather_dashboard.png" width="900">
-</p>
-
----
-
-# 🎯 Project Objectives
-
-This project was developed to demonstrate practical experience with:
-
-* Building real-time data pipelines
-* Working with REST APIs
-* Streaming data using Apache Kafka
-* Implementing a Bronze/Silver/Gold architecture
-* Using object storage with MinIO
-* Building ETL workflows with Apache Airflow
-* Performing SQL transformations
-* Designing analytical datasets
-* Building interactive Power BI dashboards
-* Containerizing data infrastructure with Docker
-
----
-
-# 🧠 Key Data Engineering Concepts
-
-### Real-Time Data Ingestion
-
-Weather data is continuously retrieved from the Open-Meteo API and published to Kafka.
-
-### Event Streaming
-
-Kafka provides a reliable messaging layer between data producers and consumers.
-
-### Data Lake Architecture
-
-The pipeline separates data into:
-
-```text
-Bronze → Raw Data
-Silver → Cleaned Data
-Gold   → Analytics Data
-```
-
-### ETL Orchestration
-
-Airflow automates and schedules the data transformation workflow.
-
-### Analytics
-
-The Gold Layer provides optimized datasets for Power BI reporting and visualization.
 
 ---
 
@@ -608,7 +363,4 @@ The Gold Layer provides optimized datasets for Power BI reporting and visualizat
 Data Analyst | Data Engineer
 
 GitHub:
-
 https://github.com/allenMP-DA
-#   D a t a - E n g i n e e r i n g - P h i l i p p i n e s - W e a t h e r - r e a l - t i m e - d a t a -  
- 
